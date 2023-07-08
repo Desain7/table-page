@@ -1,0 +1,490 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>课程表</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; padding: 0; font-family: Arial, sans-serif; font-size: 14px; }
+    .app { width: 100%; height: 100%; display: flex; flex-direction: column; }
+    .header { display: flex; justify-content: center; align-items: center; height: 48px; background-color: #007bff; color: #fff; }
+    .header h1 { margin: 0; font-size: 20px; font-weight: bold; }
+    .select { margin-left: 20px; padding: 4px; border-radius: 4px; outline: none; border: none; background-color: rgba(255, 255, 255, 0.5); }
+    .table-container { flex: 1; overflow-x: auto; }
+    .table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+    thead th, tbody td { padding: 8px; text-align: center; border: 1px solid #ddd; font-weight: normal; position: relative; }
+    thead th:first-child, tbody td:first-child { width: 20px; padding: 1px; border-top-left-radius: 8px; }
+    .time { background-color: #f2f2f2; width: 20px; }
+    .cell { height: 125px; position: relative; }
+    .cell div { position: absolute; top: 0; left: 0; right: 0; bottom: 0; margin: 4px; padding: 1px; border-radius: 4px; cursor: pointer; font-size: 12px; color: white; }
+    .color1 { background-color: #ffd401; }
+    .color2 { background-color: #f05b9d; }
+    .color3 { background-color: #32a3db; }
+    .color4 { background-color: #65c295; }
+    .color5 { background-color: #f25b6c; }
+    .lesson-info {display: none; position: fixed; top: 50%; left: 50%; width: 250px; transform: translate(-50%, -50%); background-color: #fff; padding: 16px; border-radius: 8px; box-shadow: 0 0 8px rgba(0, 0, 0, 0.2); z-index: 9999; text-align: center; }
+    .lesson-info h2 { margin-top: 0; font-size: 20px; font-weight: bold; }
+    .lesson-info p { margin: 8px 0; font-size: 16px; }
+    .close-btn { font-size: 16px; padding: 6px 10px; border-radius: 4px; border: 1px solid #ddd; margin-top: 20px; cursor: pointer; }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="header">
+      <h1>课程表</h1>
+      <select id="select" class="select"></select>
+    </div>
+    <div class="table-container">
+      <table class="table">
+        <thead>
+          <tr>
+            <th></th>
+            <th>一</th>
+            <th>二</th>
+            <th>三</th>
+            <th>四</th>
+            <th>五</th>
+            <th>六</th>
+            <th>日</th>
+          </tr>
+        </thead>
+        <tbody id="table-body"></tbody>
+      </table>
+    </div>
+    <div id="lesson-info" class="lesson-info">
+      <h2></h2>
+      <p>教室：</p>
+      <p>教师：</p>
+      <p>学分：</p>
+      <p>课程类型：</p>
+      <button id="close-btn" class="close-btn">关闭</button>
+    </div>
+  </div>
+
+  <script>
+    const weeks = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22]; // 总周数
+    const days = ['一', '二', '三', '四', '五', '六', '日']; // 星期
+    const selectedWeek = { value: 1 }; // 当前选中的周数
+    const tableData = [
+    {
+    week: 1,
+    lessonArr: [
+      {
+        time: '1',
+        cells: [
+          {},
+          {
+            lesson: '语文',
+            classroom: '教学楼201',
+            color: 'color1',
+            teacher: '王五',
+            credit: '3.0',
+            type: '必修'
+          },
+          {},
+          {
+            lesson: '物理',
+            classroom: '教学楼301',
+            color: 'color2',
+            teacher: '张三',
+            credit: '3.5',
+            type: '选修'
+          },
+          {
+            lesson: '音乐',
+            classroom: '音乐教室',
+            color: 'color5',
+            teacher: '孙七',
+            credit: '2.0',
+            type: '选修'
+          }
+        ]
+      },
+      {
+        time: '2',
+        cells: [
+          {
+            lesson: '语文',
+            classroom: '教学楼201',
+            color: 'color1',
+            teacher: '王五',
+            credit: '3.0',
+            type: '必修'
+          },
+          {},
+          {
+            lesson: '计算机',
+            classroom: '机房101',
+            color: 'color4',
+            teacher: '李四',
+            credit: '2.5',
+            type: '选修'
+          },
+          {
+            lesson: '物理',
+            classroom: '教学楼301',
+            color: 'color3',
+            teacher: '张三',
+            credit: '3.5',
+            type: '选修'
+          },
+          {
+            lesson: '政治',
+            classroom: '教学楼502',
+            color: 'color4',
+            teacher: '王五',
+            credit: '2.5',
+            type: '选修'
+          }
+        ]
+      },
+      {
+        time: '3',
+        cells: [
+          {
+            lesson: '高等数学',
+            classroom: '教学楼101',
+            color: 'color2',
+            teacher: '李四',
+            credit: '4.0',
+            type: '必修'
+          },
+          {
+            lesson: '地理',
+            classroom: '教学楼402',
+            color: 'color3',
+            teacher: '赵六',
+            credit: '2.5',
+            type: '选修'
+          },
+          {
+            lesson: '音乐',
+            classroom: '音乐教室',
+            color: 'color1',
+            teacher: '孙七',
+            credit: '2.0',
+            type: '选修'
+          },
+          {},
+          {
+            lesson: '地理',
+            classroom: '教学楼402',
+            color: 'color2',
+            teacher: '赵六',
+            credit: '2.5',
+            type: '选修'
+          }
+        ]
+      },
+      {
+        time: '4',
+        cells: [
+          {},
+          {
+            lesson: '语文',
+            classroom: '教学楼201',
+            color: 'color5',
+            teacher: '王五',
+            credit: '3.0',
+            type: '必修'
+          },
+          {
+            lesson: '历史',
+            classroom: '教学楼402',
+            color: 'color4',
+            teacher: '孙七',
+            credit: '2.5',
+            type: '选修'
+          },
+          {}
+        ]
+      },
+      {
+        time: '5',
+        cells: [
+          {
+            lesson: '英语',
+            classroom: '教学楼502',
+            color: 'color5',
+            teacher: '李八',
+            credit: '3.0',
+            type: '必修'
+          },
+          {},
+          {},
+          {
+            lesson: '计算机',
+            classroom: '机房101',
+            color: 'color4',
+            teacher: '李四',
+            credit: '2.5',
+            type: '选修'
+          }
+        ]
+      },
+      {
+        time: '6',
+        cells: [{}, {}]
+      }
+    ]
+  },
+  {
+    week: 2,
+    lessonArr: [
+      {
+        time: '1',
+        cells: [
+          {
+            lesson: '语文',
+            classroom: '教学楼201',
+            color: 'color1',
+            teacher: '王五',
+            credit: '3.0',
+            type: '必修'
+          },
+          {},
+          {
+            lesson: '计算机',
+            classroom: '机房101',
+            color: 'color4',
+            teacher: '李四',
+            credit: '2.5',
+            type: '选修'
+          },
+          {
+            lesson: '物理',
+            classroom: '教学楼301',
+            color: 'color3',
+            teacher: '张三',
+            credit: '3.5',
+            type: '选修'
+          },
+          {
+            lesson: '政治',
+            classroom: '教学楼502',
+            color: 'color4',
+            teacher: '王五',
+            credit: '2.5',
+            type: '选修'
+          }
+        ]
+      },
+      {
+        time: '2',
+        cells: [
+          {},
+          {
+            lesson: '语文',
+            classroom: '教学楼201',
+            color: 'color1',
+            teacher: '王五',
+            credit: '3.0',
+            type: '必修'
+          },
+          {},
+          {
+            lesson: '物理',
+            classroom: '教学楼301',
+            color: 'color2',
+            teacher: '张三',
+            credit: '3.5',
+            type: '选修'
+          },
+          {
+            lesson: '音乐',
+            classroom: '音乐教室',
+            color: 'color5',
+            teacher: '孙七',
+            credit: '2.0',
+            type: '选修'
+          }
+        ]
+      },
+
+      {
+        time: '3',
+        cells: [
+          {
+            lesson: '英语',
+            classroom: '教学楼502',
+            color: 'color5',
+            teacher: '李八',
+            credit: '3.0',
+            type: '必修'
+          },
+          {},
+          {},
+          {
+            lesson: '计算机',
+            classroom: '机房101',
+            color: 'color4',
+            teacher: '李四',
+            credit: '2.5',
+            type: '选修'
+          }
+        ]
+      },
+      {
+        time: '4',
+        cells: [
+          {},
+          {
+            lesson: '语文',
+            classroom: '教学楼201',
+            color: 'color5',
+            teacher: '王五',
+            credit: '3.0',
+            type: '必修'
+          },
+          {
+            lesson: '历史',
+            classroom: '教学楼402',
+            color: 'color4',
+            teacher: '孙七',
+            credit: '2.5',
+            type: '选修'
+          },
+          {}
+        ]
+      },
+      {
+        time: '5',
+        cells: [
+          {
+            lesson: '高等数学',
+            classroom: '教学楼101',
+            color: 'color2',
+            teacher: '李四',
+            credit: '4.0',
+            type: '必修'
+          },
+          {
+            lesson: '地理',
+            classroom: '教学楼402',
+            color: 'color3',
+            teacher: '赵六',
+            credit: '2.5',
+            type: '选修'
+          },
+          {
+            lesson: '音乐',
+            classroom: '音乐教室',
+            color: 'color1',
+            teacher: '孙七',
+            credit: '2.0',
+            type: '选修'
+          },
+          {},
+          {
+            lesson: '地理',
+            classroom: '教学楼402',
+            color: 'color2',
+            teacher: '赵六',
+            credit: '2.5',
+            type: '选修'
+          }
+        ]
+      },
+
+      {
+        time: '6',
+        cells: [{}, {}]
+      }
+    ]
+  }
+    ]; // 课程表数据
+
+    // 根据当前周数和星期几，返回单元格应该使用的 CSS 类
+    const getClass = (cell) => {
+      return cell.color ? `${cell.color}` : '';
+    };
+
+    // 显示课程详情
+    const showLesson = (cell) => {
+      const lessonInfo = document.getElementById('lesson-info');
+      const lessonTitle = lessonInfo.querySelector('h2');
+      const classroom = lessonInfo.querySelectorAll('p')[0];
+      const teacher = lessonInfo.querySelectorAll('p')[1];
+      const credit = lessonInfo.querySelectorAll('p')[2];
+      const type = lessonInfo.querySelectorAll('p')[3];
+
+      lessonTitle.textContent = cell.lesson;
+      classroom.textContent = `教室： ${cell.classroom}`;
+      teacher.textContent = `教师： ${cell.teacher}`;
+      credit.textContent = `学分： ${cell.credit}`;
+      type.textContent = `课程类型： ${cell.type}`;
+      
+      lessonInfo.style.display = 'block';
+    };
+
+    // 关闭课程详情
+    const closeLessonInfo = () => {
+      const lessonInfo = document.getElementById('lesson-info');
+      lessonInfo.style.display = 'none';
+    };
+
+    // 创建课程表格
+    const createTable = () => {
+      const tableBody = document.getElementById('table-body');
+
+      tableData.forEach((weekData) => {
+        if (weekData.week === selectedWeek.value) {
+          weekData.lessonArr.forEach((row, rowIndex) => {
+            const tr = document.createElement('tr');
+            tr.setAttribute('key', rowIndex);
+
+            const timeTd = document.createElement('td');
+            timeTd.classList.add('time');
+            timeTd.textContent = row.time;
+            tr.appendChild(timeTd);
+
+            row.cells.forEach((cell, cellIndex) => {
+              const td = document.createElement('td');
+              td.setAttribute('key', cellIndex);
+              td.className = `cell ${getClass(cell)}`;
+
+              const div = document.createElement('div');
+              div.textContent = `${cell.lesson} @${cell.classroom}`;
+              div.addEventListener('click', () => {
+                showLesson(cell);
+              });
+
+              td.appendChild(div);
+              tr.appendChild(td);
+            });
+
+            tableBody.appendChild(tr);
+          });
+        }
+      });
+    };
+
+    // 创建选项卡
+    const createSelect = () => {
+      const select = document.getElementById('select');
+
+      weeks.forEach((week) => {
+        const option = document.createElement('option');
+        option.setAttribute('key', week);
+        option.setAttribute('value', week);
+        option.textContent = week;
+        select.appendChild(option);
+      });
+
+      select.addEventListener('change', (event) => {
+        selectedWeek.value = parseInt(event.target.value);
+        const tableBody = document.getElementById('table-body');
+        tableBody.innerHTML = '';
+        createTable();
+      });
+    };
+
+    createSelect();
+    createTable();
+
+    const closeBtn = document.getElementById('close-btn');
+    closeBtn.addEventListener('click', closeLessonInfo);
+  </script>
+</body>
+</html>
