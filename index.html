@@ -445,10 +445,13 @@
               td.className = `cell ${getClass(cell)}`;
 
               const div = document.createElement('div');
-              div.textContent = `${cell.lesson} @${cell.classroom}`;
-              div.addEventListener('click', () => {
+              div.textContent = `${cell.lesson ? cell.lesson : ''} ${cell.classroom ? '@'+cell.classroom : ''}`;
+              if(cell.lesson) {
+                div.addEventListener('click', () => {
                 showLesson(cell);
               });
+              }
+
 
               td.appendChild(div);
               tr.appendChild(td);
