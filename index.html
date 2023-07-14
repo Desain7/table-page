@@ -395,6 +395,22 @@
   }
     ]; // 课程表数据
 
+		//苍穹向本页面传数据
+		window.onload = function(){
+			window.addEventListener('message',function(e){
+				// if (e.origin !== "http://192.168.5.54:8080"){
+				// 	return;
+				// }
+				// debugger
+				if (e.data){
+					//苍穹传过来的数据
+					var json = eval("("+e.data+")");
+          console.log(json)
+				}
+			})
+		}
+
+
     // 根据当前周数和星期几，返回单元格应该使用的 CSS 类
     const getClass = (cell) => {
       return cell.color ? `${cell.color}` : '';
